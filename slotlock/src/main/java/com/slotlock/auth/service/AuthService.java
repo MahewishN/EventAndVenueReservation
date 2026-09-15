@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
     public void register(RegisterRequest request)
@@ -62,32 +62,42 @@ public class AuthService {
         return new AuthResponse(accessToken, refreshToken);
     }
 
-    public AuthResponse refreshToken(RefreshTokenRequest request)
-    {
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+
         String refreshToken = request.getRefreshToken();
-        String email = jwtService.extractEmail(refreshToken);
 
-        if(!"REFRESH".equals(jwtService.extractTokenType(refreshToken))){
-            throw new InvalidRefreshTokenException("Invalid refresh token");
-        }
+        try {
+            String email = jwtService.extractEmail(refreshToken);
 
-        User user = userRepository.findByEmail(email)
-                        .orElseThrow(()-> new InvalidRefreshTokenException("Invalid refresh token"));
+            if (!"REFRESH".equals(jwtService.extractTokenType(refreshToken))) {
+                throw new InvalidRefreshTokenException("Invalid refresh token");
+            }
 
-        UserDetails userDetails =
-                org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                        .password(user.getPassword())
-                        .roles(user.getRole().name())
-                        .disabled(!user.getActive())
-                        .build();
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
 
-        if(!jwtService.isTokenValid(refreshToken, userDetails)){
+            UserDetails userDetails =
+                    org.springframework.security.core.userdetails.User
+                            .withUsername(user.getEmail())
+                            .password(user.getPassword())
+                            .roles(user.getRole().name())
+                            .disabled(!user.getActive())
+                            .build();
+
+            if (!jwtService.isTokenValid(refreshToken, userDetails)) {
+                throw new InvalidRefreshTokenException("Invalid or expired refresh token");}
+
+            String newAccessToken = jwtService.generateAccessToken(userDetails);
+
+            return new AuthResponse(
+                    newAccessToken,
+                    refreshToken
+            );
+
+        } catch(InvalidRefreshTokenException ex) {
+            throw ex;
+        } catch (Exception ex) {
             throw new InvalidRefreshTokenException("Invalid or expired refresh token");
         }
-
-        String newAccessToken = jwtService.generateAccessToken(userDetails);
-
-        return new AuthResponse(newAccessToken, refreshToken);
     }
 }
