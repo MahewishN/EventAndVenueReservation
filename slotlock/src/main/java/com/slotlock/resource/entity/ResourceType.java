@@ -1,4 +1,10 @@
 package com.slotlock.resource.entity;
 
-public class ResourceType {
+public enum ResourceType {
+    SEMINAR_HALL,
+    WEDDING_HALL,
+    TURF,
+    CONFERENCE_ROOM,
+    AUDITORIUM,
+    OTHER
 }
