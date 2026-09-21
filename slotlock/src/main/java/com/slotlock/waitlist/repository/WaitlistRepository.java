@@ -4,6 +4,7 @@ import com.slotlock.waitlist.entity.WaitlistEntry;
 import com.slotlock.waitlist.entity.WaitlistStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,8 +18,11 @@ public interface WaitlistRepository extends JpaRepository<WaitlistEntry, Long> {
                                                            Long userId,
                                                            WaitlistStatus status);
 
-    List<WaitlistEntry> findBYSlotIdAndStatusOrderByJoinedAtAsc(Long slotId,
+    List<WaitlistEntry> findBySlotIdAndStatusOrderByJoinedAtAsc(Long slotId,
                                                                 WaitlistStatus status);
 
     List<WaitlistEntry> findByUserIdOrderByJoinedAtDesc(Long userId);
+
+    List<WaitlistEntry> findByStatusAndExpiresAtBefore(WaitlistStatus status,
+                                                       LocalDateTime time);
 }

@@ -1,7 +1,12 @@
 package com.slotlock.waitlist.service;
 
+import com.slotlock.booking.dto.BookingResponse;
+import com.slotlock.booking.entity.Booking;
+import com.slotlock.booking.entity.BookingStatus;
+import com.slotlock.booking.repository.BookingRepository;
 import com.slotlock.exception.InvalidSlotOperationException;
 import com.slotlock.exception.SlotNotFoundException;
+import com.slotlock.exception.UserNotFoundException;
 import com.slotlock.slot.entity.Slot;
 import com.slotlock.slot.entity.SlotStatus;
 import com.slotlock.slot.repository.SlotRepository;
@@ -13,7 +18,7 @@ import com.slotlock.waitlist.dto.WaitlistResponse;
 import com.slotlock.waitlist.entity.WaitlistEntry;
 import com.slotlock.waitlist.entity.WaitlistStatus;
 import com.slotlock.waitlist.repository.WaitlistRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +33,7 @@ public class WaitlistService {
     private final WaitlistRepository waitlistRepository;
     private final SlotRepository slotRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
     @Transactional
     public WaitlistResponse joinWaitlist(JoinWaitlistRequest request)
@@ -83,7 +89,7 @@ public class WaitlistService {
         }
 
         List<WaitlistEntry> waitingEntries = waitlistRepository
-                .findBYSlotIdAndStatusOrderByJoinedAtAsc(entry.getSlot().getId(),
+                .findBySlotIdAndStatusOrderByJoinedAtAsc(entry.getSlot().getId(),
                                                     WaitlistStatus.WAITING);
 
         int position = 0;
@@ -119,6 +125,55 @@ public class WaitlistService {
                 .toList();
     }
 
+    @Transactional
+    public BookingResponse confirmWaitlistOffer(Long entryId)
+    {
+        WaitlistEntry entry = waitlistRepository.findById(entryId)
+                .orElseThrow(()-> new InvalidSlotOperationException
+                        ("Waitlist entry not found with id: "+entryId));
+
+        String email = getAuthenticatedUserEmail();
+        if(!entry.getUser().getEmail().equals(email))
+        {
+            throw new InvalidSlotOperationException("You can only confirm your own waitlist offer");
+        }
+
+        if(entry.getStatus() != WaitlistStatus.OFFERED)
+        {
+            throw new InvalidSlotOperationException("Only offered waitlist entries can be confirmed");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if(now.isAfter(entry.getExpiresAt()))
+        {
+            entry.setStatus(WaitlistStatus.EXPIRED);
+            waitlistRepository.save(entry);
+
+            throw new InvalidSlotOperationException("Waitlist offer has expired");
+        }
+
+        Slot slot = entry.getSlot();
+        if(slot.getStatus() != SlotStatus.AVAILABLE)
+        {
+            throw new InvalidSlotOperationException("Slot is not longer available");
+        }
+
+        slot.setStatus(SlotStatus.BOOKED);
+        Slot savedSlot = slotRepository.saveAndFlush(slot);
+
+        Booking booking = Booking.builder()
+                .slot(savedSlot)
+                .user(entry.getUser())
+                .status(BookingStatus.CONFIRMED)
+                .bookedAt(now)
+                .expiresAt(now)
+                .build();
+
+        Booking savedBooking = bookingRepository.save(booking);
+        entry.setStatus(WaitlistStatus.CONVERTED);
+        waitlistRepository.save(entry);
+        return mapToBookingResponse(savedBooking);
+    }
+
     private String getAuthenticatedUserEmail()
     {
         Authentication authentication = SecurityContextHolder.getContext()
@@ -144,5 +199,24 @@ public class WaitlistService {
                 entry.getOfferedAt(),
                 entry.getExpiresAt()
                 );
+    }
+
+    private BookingResponse mapToBookingResponse(Booking booking) {
+
+        Slot slot = booking.getSlot();
+
+        return new BookingResponse(
+                booking.getId(),
+                slot.getId(),
+                slot.getResource().getId(),
+                slot.getResource().getName(),
+                booking.getUser().getId(),
+                slot.getDate(),
+                slot.getStartTime(),
+                slot.getEndTime(),
+                booking.getStatus(),
+                booking.getBookedAt(),
+                booking.getExpiresAt()
+        );
     }
 }

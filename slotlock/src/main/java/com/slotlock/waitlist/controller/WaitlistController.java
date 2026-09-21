@@ -1,5 +1,6 @@
 package com.slotlock.waitlist.controller;
 
+import com.slotlock.booking.dto.BookingResponse;
 import com.slotlock.waitlist.dto.JoinWaitlistRequest;
 import com.slotlock.waitlist.dto.WaitlistPositionResponse;
 import com.slotlock.waitlist.dto.WaitlistResponse;
@@ -39,6 +40,13 @@ public class WaitlistController {
             @PathVariable Long entryId)
     {
         return ResponseEntity.ok(waitlistService.getPosition(entryId));
+    }
+
+    @PostMapping("/{entryId}/confirm")
+    public ResponseEntity<BookingResponse> confirmWaitlistOffer(
+            @PathVariable Long entryId)
+    {
+        return ResponseEntity.ok(waitlistService.confirmWaitlistOffer(entryId));
     }
 
 }
