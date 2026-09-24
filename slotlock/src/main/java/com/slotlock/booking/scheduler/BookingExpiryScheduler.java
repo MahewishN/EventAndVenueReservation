@@ -24,7 +24,7 @@ public class BookingExpiryScheduler {
     private final SlotRepository slotRepository;
     private final WaitlistRepository waitlistRepository;
 
-    private static final long WAITLIST_OFFER_WINDOW_MINUTES = 2;
+    private static final long WAITLIST_OFFER_WINDOW_MINUTES = 10;
 
     @Scheduled(fixedRate = 60000)
     @Transactional

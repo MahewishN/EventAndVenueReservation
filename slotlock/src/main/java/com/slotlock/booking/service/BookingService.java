@@ -5,8 +5,8 @@ import com.slotlock.booking.dto.CreateBookingRequest;
 import com.slotlock.booking.entity.Booking;
 import com.slotlock.booking.entity.BookingStatus;
 import com.slotlock.booking.repository.BookingRepository;
+import com.slotlock.exception.ConcurrentBookingException;
 import com.slotlock.exception.InvalidSlotOperationException;
-import com.slotlock.exception.SlotNotFoundException;
 import com.slotlock.exception.UserNotFoundException;
 import com.slotlock.slot.entity.Slot;
 import com.slotlock.slot.entity.SlotStatus;
@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,55 +29,96 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final SlotRepository slotRepository;
     private final UserRepository userRepository;
+    private final BookingTransactionService bookingTransactionService;
 
-    private static final long CONFIRMATION_WINDOW_MINUTES = 1;
+    private static final long CONFIRMATION_WINDOW_MINUTES = 10;
 
-    @Transactional
+//    @Transactional
+//    public BookingResponse createBooking(CreateBookingRequest request)
+//    {
+//        Slot slot = slotRepository.findById(request.getSlotId())
+//                .orElseThrow(()-> new SlotNotFoundException
+//                        ("Slot not found with id: "+request.getSlotId()));
+//
+//        if(slot.getStatus() != SlotStatus.AVAILABLE)
+//        {
+//            throw new InvalidSlotOperationException("Slot is not available for booking");
+//        }
+//
+//        String email = getAuthenticatedUserEmail();
+//
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(()-> new UserNotFoundException
+//                        ("User not found"));
+//
+//        if(!user.getActive())
+//        {
+//            throw new InvalidSlotOperationException("Inactive users cannot create bookings");
+//        }
+//
+//        /*
+//         * The Slot is the resource being competed for.
+//         *
+//         * @Version on Slot ensures that if another transaction
+//         * modifies this same slot first, Hibernate detects the
+//         * version conflict.
+//         */
+//        slot.setStatus(SlotStatus.BOOKED);
+//        Slot savedSlot = slotRepository.saveAndFlush(slot);
+//
+//        LocalDateTime bookedAt = LocalDateTime.now();
+//        LocalDateTime expiresAt = bookedAt.plusMinutes(CONFIRMATION_WINDOW_MINUTES);
+//
+//        Booking booking = Booking.builder()
+//                .slot(savedSlot)
+//                .user(user)
+//                .status(BookingStatus.PENDING)
+//                .bookedAt(bookedAt)
+//                .expiresAt(expiresAt)
+//                .build();
+//
+//        Booking savedBooking = bookingRepository.save(booking);
+//        return mapToResponse(savedBooking);
+//    }
+
     public BookingResponse createBooking(CreateBookingRequest request)
     {
-        Slot slot = slotRepository.findById(request.getSlotId())
-                .orElseThrow(()-> new SlotNotFoundException
-                        ("Slot not found with id: "+request.getSlotId()));
-
-        if(slot.getStatus() != SlotStatus.AVAILABLE)
-        {
-            throw new InvalidSlotOperationException("Slot is not available for booking");
-        }
-
         String email = getAuthenticatedUserEmail();
+        final int maxAttempts = 3;
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new UserNotFoundException
-                        ("User not found"));
-
-        if(!user.getActive())
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            throw new InvalidSlotOperationException("Inactive users cannot create bookings");
+            try {
+                return bookingTransactionService.createBookingTransaction(request, email);
+            }
+            catch (OptimisticLockingFailureException ex)
+            {
+                if (attempt == maxAttempts) {
+                    throw new ConcurrentBookingException(
+                            "Slot booking failed because another user booked the slot concurrently"
+                    );
+                }
+
+                try {
+                    Thread.sleep(50L * attempt);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                    throw new InvalidSlotOperationException(
+                            "Booking operation was interrupted"
+                    );
+                }
+            }
         }
+        throw new InvalidSlotOperationException(
+                "Unable to create booking"
+        );
+    }
 
-        /*
-         * The Slot is the resource being competed for.
-         *
-         * @Version on Slot ensures that if another transaction
-         * modifies this same slot first, Hibernate detects the
-         * version conflict.
-         */
-        slot.setStatus(SlotStatus.BOOKED);
-        Slot savedSlot = slotRepository.saveAndFlush(slot);
-
-        LocalDateTime bookedAt = LocalDateTime.now();
-        LocalDateTime expiresAt = bookedAt.plusMinutes(CONFIRMATION_WINDOW_MINUTES);
-
-        Booking booking = Booking.builder()
-                .slot(savedSlot)
-                .user(user)
-                .status(BookingStatus.PENDING)
-                .bookedAt(bookedAt)
-                .expiresAt(expiresAt)
-                .build();
-
-        Booking savedBooking = bookingRepository.save(booking);
-        return mapToResponse(savedBooking);
+    public BookingResponse createBookingPessimistic(CreateBookingRequest request)
+    {
+        String email = getAuthenticatedUserEmail();
+        return bookingTransactionService.createBookingPessimisticTransaction(
+                request, email);
     }
 
     @Transactional

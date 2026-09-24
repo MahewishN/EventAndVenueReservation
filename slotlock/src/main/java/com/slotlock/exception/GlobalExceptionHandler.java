@@ -147,4 +147,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(error);
     }
+
+    @ExceptionHandler(ConcurrentBookingException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentBooking(ConcurrentBookingException ex)
+    {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "CONCURRENT_BOOKING_CONFLICT",
+                ex.getMessage(),
+                LocalDateTime.now());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
 }
