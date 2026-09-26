@@ -13,6 +13,7 @@ import com.slotlock.slot.entity.SlotStatus;
 import com.slotlock.slot.repository.SlotRepository;
 import com.slotlock.user.entity.User;
 import com.slotlock.user.repository.UserRepository;
+import com.slotlock.waitlist.service.WaitlistService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.dao.OptimisticLockingFailureException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,56 +32,9 @@ public class BookingService {
     private final SlotRepository slotRepository;
     private final UserRepository userRepository;
     private final BookingTransactionService bookingTransactionService;
+    private final WaitlistService waitlistService;
 
     private static final long CONFIRMATION_WINDOW_MINUTES = 10;
-
-//    @Transactional
-//    public BookingResponse createBooking(CreateBookingRequest request)
-//    {
-//        Slot slot = slotRepository.findById(request.getSlotId())
-//                .orElseThrow(()-> new SlotNotFoundException
-//                        ("Slot not found with id: "+request.getSlotId()));
-//
-//        if(slot.getStatus() != SlotStatus.AVAILABLE)
-//        {
-//            throw new InvalidSlotOperationException("Slot is not available for booking");
-//        }
-//
-//        String email = getAuthenticatedUserEmail();
-//
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(()-> new UserNotFoundException
-//                        ("User not found"));
-//
-//        if(!user.getActive())
-//        {
-//            throw new InvalidSlotOperationException("Inactive users cannot create bookings");
-//        }
-//
-//        /*
-//         * The Slot is the resource being competed for.
-//         *
-//         * @Version on Slot ensures that if another transaction
-//         * modifies this same slot first, Hibernate detects the
-//         * version conflict.
-//         */
-//        slot.setStatus(SlotStatus.BOOKED);
-//        Slot savedSlot = slotRepository.saveAndFlush(slot);
-//
-//        LocalDateTime bookedAt = LocalDateTime.now();
-//        LocalDateTime expiresAt = bookedAt.plusMinutes(CONFIRMATION_WINDOW_MINUTES);
-//
-//        Booking booking = Booking.builder()
-//                .slot(savedSlot)
-//                .user(user)
-//                .status(BookingStatus.PENDING)
-//                .bookedAt(bookedAt)
-//                .expiresAt(expiresAt)
-//                .build();
-//
-//        Booking savedBooking = bookingRepository.save(booking);
-//        return mapToResponse(savedBooking);
-//    }
 
     public BookingResponse createBooking(CreateBookingRequest request)
     {
@@ -183,6 +138,49 @@ public class BookingService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookings(BookingStatus status,
+                                                Long resourceId,
+                                                LocalDate date)
+    {
+        return bookingRepository
+                .findAdminBookings(status, resourceId, date)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingById(Long bookingId)
+    {
+        Booking booking = findBookingById(bookingId);
+        return mapToResponse(booking);
+    }
+
+    @Transactional
+    public void cancelBookingAsAdmin(Long bookingId) {
+
+        Booking booking = findBookingById(bookingId);
+
+        if (booking.getStatus() != BookingStatus.PENDING &&
+                booking.getStatus() != BookingStatus.CONFIRMED) {
+
+            throw new InvalidSlotOperationException(
+                    "Only pending or confirmed bookings can be cancelled"
+            );
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+
+        Slot slot = booking.getSlot();
+        slot.setStatus(SlotStatus.AVAILABLE);
+
+        slotRepository.save(slot);
+        bookingRepository.save(booking);
+
+        waitlistService.promoteNextWaitlistEntryForSlot(slot.getId());
     }
 
     private Booking findBookingById(Long bookingId)

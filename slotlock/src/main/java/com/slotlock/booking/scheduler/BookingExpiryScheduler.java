@@ -9,6 +9,7 @@ import com.slotlock.slot.repository.SlotRepository;
 import com.slotlock.waitlist.entity.WaitlistEntry;
 import com.slotlock.waitlist.entity.WaitlistStatus;
 import com.slotlock.waitlist.repository.WaitlistRepository;
+import com.slotlock.waitlist.service.WaitlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class BookingExpiryScheduler {
     private final BookingRepository bookingRepository;
     private final SlotRepository slotRepository;
     private final WaitlistRepository waitlistRepository;
+    private final WaitlistService waitlistService;
 
     private static final long WAITLIST_OFFER_WINDOW_MINUTES = 10;
 
@@ -37,40 +39,39 @@ public class BookingExpiryScheduler {
         {
             booking.setStatus(BookingStatus.EXPIRED);
             Slot slot = booking.getSlot();
-            if(slot.getStatus() == SlotStatus.BOOKED)
-            {
+            if (slot.getStatus() == SlotStatus.BOOKED) {
                 slot.setStatus(SlotStatus.AVAILABLE);
                 slotRepository.save(slot);
 
-                promoteNextWaitlistEntry(slot);
+                waitlistService.promoteNextWaitlistEntryForSlot(slot.getId());
             }
             bookingRepository.save(booking);
         }
         expireWaitlistOffers(now);
     }
 
-    private void promoteNextWaitlistEntry(Slot slot)
-    {
-        List<WaitlistEntry> waitingEntries = waitlistRepository
-                .findBySlotIdAndStatusOrderByJoinedAtAsc(slot.getId(),
-                        WaitlistStatus.WAITING);
-
-        if(waitingEntries.isEmpty())
-        {
-            return ;
-        }
-
-        WaitlistEntry entry = waitingEntries.get(0);
-
-        LocalDateTime offeredAt = LocalDateTime.now();
-        LocalDateTime expiresAt = offeredAt.plusMinutes(WAITLIST_OFFER_WINDOW_MINUTES);
-
-        entry.setStatus(WaitlistStatus.OFFERED);
-        entry.setOfferedAt(offeredAt);
-        entry.setExpiresAt(expiresAt);
-
-        waitlistRepository.save(entry);
-    }
+//    private void promoteNextWaitlistEntry(Slot slot)
+//    {
+//        List<WaitlistEntry> waitingEntries = waitlistRepository
+//                .findBySlotIdAndStatusOrderByJoinedAtAsc(slot.getId(),
+//                        WaitlistStatus.WAITING);
+//
+//        if(waitingEntries.isEmpty())
+//        {
+//            return ;
+//        }
+//
+//        WaitlistEntry entry = waitingEntries.get(0);
+//
+//        LocalDateTime offeredAt = LocalDateTime.now();
+//        LocalDateTime expiresAt = offeredAt.plusMinutes(WAITLIST_OFFER_WINDOW_MINUTES);
+//
+//        entry.setStatus(WaitlistStatus.OFFERED);
+//        entry.setOfferedAt(offeredAt);
+//        entry.setExpiresAt(expiresAt);
+//
+//        waitlistRepository.save(entry);
+//    }
 
     private void expireWaitlistOffers(LocalDateTime now)
     {
@@ -84,9 +85,8 @@ public class BookingExpiryScheduler {
 
             Slot slot = entry.getSlot();
 
-            if(slot.getStatus() == SlotStatus.AVAILABLE)
-            {
-                promoteNextWaitlistEntry(slot);
+            if (slot.getStatus() == SlotStatus.AVAILABLE) {
+                waitlistService.promoteNextWaitlistEntryForSlot(slot.getId());
             }
         }
     }

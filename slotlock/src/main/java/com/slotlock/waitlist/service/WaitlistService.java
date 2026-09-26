@@ -174,6 +174,35 @@ public class WaitlistService {
         return mapToBookingResponse(savedBooking);
     }
 
+    @Transactional
+    public void promoteNextWaitlistEntryForSlot(Long slotId)
+    {
+        Slot slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new SlotNotFoundException("Slot not found with id: " + slotId));
+
+        if (slot.getStatus() != SlotStatus.AVAILABLE) {
+            return;
+        }
+
+        List<WaitlistEntry> waitingEntries = waitlistRepository
+                .findBySlotIdAndStatusOrderByJoinedAtAsc(slotId, WaitlistStatus.WAITING);
+
+        if (waitingEntries.isEmpty()) {
+            return;
+        }
+
+        WaitlistEntry entry = waitingEntries.get(0);
+
+        LocalDateTime offeredAt = LocalDateTime.now();
+        LocalDateTime expiresAt = offeredAt.plusMinutes(10);
+
+        entry.setStatus(WaitlistStatus.OFFERED);
+        entry.setOfferedAt(offeredAt);
+        entry.setExpiresAt(expiresAt);
+
+        waitlistRepository.save(entry);
+    }
+
     private String getAuthenticatedUserEmail()
     {
         Authentication authentication = SecurityContextHolder.getContext()

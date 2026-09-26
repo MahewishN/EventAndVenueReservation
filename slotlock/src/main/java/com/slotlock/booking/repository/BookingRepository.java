@@ -3,7 +3,10 @@ package com.slotlock.booking.repository;
 import com.slotlock.booking.entity.Booking;
 import com.slotlock.booking.entity.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
@@ -15,4 +18,20 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByStatusAndExpiresAtBefore(BookingStatus status,
                                                  java.time.LocalDateTime time);
 
+    @Query("""
+            SELECT b
+            FROM Booking b
+            JOIN FETCH b.slot s
+            JOIN FETCH s.resource r
+            JOIN FETCH b.user u
+            WHERE (:status IS NULL OR b.status = :status)
+              AND (:resourceId IS NULL OR r.id = :resourceId)
+              AND (:date IS NULL OR s.date = :date)
+            ORDER BY b.bookedAt DESC
+            """)
+    List<Booking> findAdminBookings(
+            @Param("status") BookingStatus status,
+            @Param("resourceId") Long resourceId,
+            @Param("date") LocalDate date
+    );
 }

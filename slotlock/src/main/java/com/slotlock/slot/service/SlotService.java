@@ -13,6 +13,8 @@ import com.slotlock.slot.repository.SlotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
+//import java.time.ZoneId;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -148,6 +150,56 @@ public class SlotService {
         Slot updatedSlot = slotRepository.save(slot);
 
         return mapToResponse(updatedSlot);
+    }
+
+//    @Transactional
+//    public void expirePastSlots()
+//    {
+//        List<Slot> pastSlots = slotRepository.findByDateBefore(LocalDate.now());
+//
+//        for (Slot slot : pastSlots)
+//        {
+//            if (slot.getStatus() != SlotStatus.EXPIRED) {
+//                slot.setStatus(SlotStatus.EXPIRED);
+//            }
+//        }
+//        if (!pastSlots.isEmpty()) {
+//            slotRepository.saveAll(pastSlots);
+//        }
+//    }
+//
+//    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Kolkata")
+//    public void expirePastSlotsAutomatically() {
+//        expirePastSlots();
+//    }
+
+    @Transactional
+    public void expirePastSlots()
+    {
+        LocalDate today = LocalDate.now(
+                java.time.ZoneId.of("Asia/Kolkata")
+        );
+
+        List<Slot> pastSlots =
+                slotRepository.findByDateBefore(today);
+
+        List<Slot> slotsToExpire = pastSlots.stream()
+                .filter(slot -> slot.getStatus() != SlotStatus.EXPIRED)
+                .toList();
+
+        if (!slotsToExpire.isEmpty()) {
+            slotsToExpire.forEach(
+                    slot -> slot.setStatus(SlotStatus.EXPIRED)
+            );
+
+            slotRepository.saveAll(slotsToExpire);
+        }
+    }
+
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Kolkata")
+    @Transactional
+    public void expirePastSlotsAutomatically() {
+        expirePastSlots();
     }
 
     @Transactional(readOnly = true)

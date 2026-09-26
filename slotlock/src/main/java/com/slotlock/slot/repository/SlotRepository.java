@@ -24,4 +24,6 @@ public interface SlotRepository extends JpaRepository<Slot, Long>{
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM Slot s WHERE s.id = :slotId")
     java.util.Optional<Slot> findByIdForUpdate(@Param("slotId") Long slotId);
+
+    List<Slot> findByDateBefore(LocalDate date);
 }
