@@ -26,4 +26,6 @@ public interface SlotRepository extends JpaRepository<Slot, Long>{
     java.util.Optional<Slot> findByIdForUpdate(@Param("slotId") Long slotId);
 
     List<Slot> findByDateBefore(LocalDate date);
+
+    long countByResourceId(Long resourceId);
 }
