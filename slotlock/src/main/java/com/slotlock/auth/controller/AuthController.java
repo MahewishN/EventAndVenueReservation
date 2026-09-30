@@ -1,5 +1,8 @@
 package com.slotlock.auth.controller;
 
+import com.slotlock.auth.dto.ForgotPasswordRequest;
+import com.slotlock.auth.dto.ResetPasswordRequest;
+import com.slotlock.auth.dto.VerifyRegistrationRequest;
 import com.slotlock.auth.service.AuthService;
 import com.slotlock.user.dto.AuthResponse;
 import com.slotlock.user.dto.LoginRequest;
@@ -23,8 +26,17 @@ public class AuthController {
     {
         authService.register(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body("User registered successfully");
+        return ResponseEntity.accepted()
+                .body("Registration started. Please check your email for the OTP");
+    }
+
+    @PostMapping("/verify-registration")
+    public ResponseEntity<String> verifyRegistration(
+            @Valid @RequestBody VerifyRegistrationRequest request)
+    {
+        authService.verifyRegistration(request.getEmail(), request.getOtp());
+
+        return ResponseEntity.ok("Email verified. Your account has been created successfully");
     }
 
     @PostMapping("/login")
@@ -39,5 +51,21 @@ public class AuthController {
             @Valid @RequestBody RefreshTokenRequest request)
     {
         return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request)
+    {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok("If an account exists for this email, a password-reset OTP has been sent");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request)
+    {
+        authService.resetPassword(request);
+        return ResponseEntity.ok("Password reset successfully. You can now login with your new password");
     }
 }
