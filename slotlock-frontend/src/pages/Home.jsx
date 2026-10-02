@@ -36,6 +36,14 @@ function Home() {
             >
               Sign In
             </Link>
+
+            <Link
+              to="/resources"
+              className="rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white transition hover:bg-indigo-700"
+            >
+              Explore Venues
+            </Link>
+
           </div>
         </div>
 

@@ -3,6 +3,7 @@ package com.slotlock.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -49,8 +50,18 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Public authentication endpoints
                         .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated())
+                        // Public resource browsing
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/resources",
+                                "/api/resources/**",
+                                "/api/slots/**").permitAll()
+                        // All other endpoints require authentication
+                        .anyRequest().authenticated()
+                )
+
                 .exceptionHandling(exception->exception
                         .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler)

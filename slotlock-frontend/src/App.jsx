@@ -2,10 +2,12 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { isAuthenticated } from "./utils/auth";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -14,6 +16,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import Resources from "./pages/Resources";
+import ResourceDetails from "./pages/ResourceDetails";
+import BookingConfirmation from "./pages/BookingConfirmation";
+import MyBookings from "./pages/MyBookings";
 
 function App() {
   return (
@@ -22,14 +28,29 @@ function App() {
         <Navbar />
 
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* Home: redirect authenticated users to Dashboard */}
+          <Route
+            path="/"
+            element={
+              isAuthenticated() ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Home />
+              )
+            }
+          />
+
+          {/* Public routes */}
+          <Route path="/resources" element={<Resources />} />
+
+          <Route
+            path="/resources/:resourceId"
+            element={<ResourceDetails />}
+          />
 
           <Route path="/login" element={<Login />} />
 
-          <Route
-            path="/register"
-            element={<Register />}
-          />
+          <Route path="/register" element={<Register />} />
 
           <Route
             path="/forgot-password"
@@ -41,17 +62,25 @@ function App() {
             element={<ResetPassword />}
           />
 
+          {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route
               path="/dashboard"
               element={<Dashboard />}
             />
+
+            <Route
+              path="/my-bookings"
+              element={<MyBookings />}
+            />
+
+            <Route
+              path="/bookings/:bookingId/confirm"
+              element={<BookingConfirmation />}
+            />
           </Route>
 
-          <Route
-            path="*"
-            element={<NotFound />}
-          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </BrowserRouter>

@@ -21,39 +21,20 @@ function Navbar() {
     <header className="border-b border-slate-200 bg-white">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link
-          to="/"
+          to={authenticated ? "/dashboard" : "/"}
           className="text-2xl font-bold text-indigo-600"
         >
           SlotLock
         </Link>
 
         <div className="flex items-center gap-6">
-          <NavLink to="/" className={linkClass}>
-            Home
-          </NavLink>
-
-          {authenticated ? (
+          {!authenticated && (
             <>
-              <NavLink
-                to="/dashboard"
-                className={linkClass}
-              >
-                Dashboard
+              <NavLink to="/" className={linkClass}>
+                Home
               </NavLink>
 
-              <button
-                onClick={handleLogout}
-                className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-100"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <NavLink
-                to="/login"
-                className={linkClass}
-              >
+              <NavLink to="/login" className={linkClass}>
                 Login
               </NavLink>
 
@@ -63,6 +44,21 @@ function Navbar() {
               >
                 Get Started
               </Link>
+            </>
+          )}
+
+          {authenticated && (
+            <>
+              <NavLink to="/dashboard" className={linkClass}>
+                Dashboard
+              </NavLink>
+
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Logout
+              </button>
             </>
           )}
         </div>

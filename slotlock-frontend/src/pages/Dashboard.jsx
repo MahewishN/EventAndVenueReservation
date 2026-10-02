@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { clearTokens } from "../utils/auth";
+import { Link } from "react-router-dom";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -36,32 +37,54 @@ function Dashboard() {
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+
+          {/* Browse Venues */}
+          <Link
+            to="/resources"
+            className="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+          >
             <h2 className="font-semibold text-slate-900">
               Browse Venues
             </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Explore available venues and resources.
-            </p>
-          </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="font-semibold text-slate-900">
+            <p className="mt-2 text-sm text-slate-600">
+              Explore available venues and find a space for your event.
+            </p>
+
+            <span className="mt-4 inline-block text-sm font-semibold text-indigo-600">
+              Explore venues →
+            </span>
+          </Link>
+
+          {/* My Bookings */}
+          <Link
+            to="/my-bookings"
+            className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+          >
+            <h2 className="font-medium text-slate-900">
               My Bookings
             </h2>
-            <p className="mt-2 text-sm text-slate-600">
+
+            <p className="mt-1 text-sm text-slate-600">
               View and manage your reservations.
             </p>
-          </div>
 
+            <span className="mt-4 inline-block text-sm font-medium text-indigo-600">
+              View bookings →
+            </span>
+          </Link>
+
+          {/* Account */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="font-semibold text-slate-900">
               Account
             </h2>
+
             <p className="mt-2 text-sm text-slate-600">
               Your account and profile information.
             </p>
           </div>
+
         </div>
       </div>
     </main>

@@ -12,5 +12,4 @@ public class SlotlockApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(SlotlockApplication.class, args);
 	}
-
 }
