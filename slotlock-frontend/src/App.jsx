@@ -20,6 +20,11 @@ import Resources from "./pages/Resources";
 import ResourceDetails from "./pages/ResourceDetails";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import MyBookings from "./pages/MyBookings";
+import AdminRoute from "./components/AdminRoute";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminResources from "./pages/AdminResources";
+import AdminSlots from "./pages/AdminSlots";
+import AdminBookings from "./pages/AdminBookings";
 
 function App() {
   return (
@@ -78,6 +83,29 @@ function App() {
               path="/bookings/:bookingId/confirm"
               element={<BookingConfirmation />}
             />
+          </Route>
+
+          <Route element={<AdminRoute />}>
+          <Route
+            path="/admin/dashboard"
+            element={<AdminDashboard />}
+          />
+
+          <Route
+            path="/admin/resources"
+            element={<AdminResources />}
+          />
+
+          <Route
+            path="/admin/slots"
+            element={<AdminSlots />}
+          />
+
+          <Route
+            path="/admin/bookings"
+            element={<AdminBookings />}
+          />
+          
           </Route>
 
           <Route path="*" element={<NotFound />} />

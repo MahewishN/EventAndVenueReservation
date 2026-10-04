@@ -1,9 +1,55 @@
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { isAuthenticated, clearTokens } from "../utils/auth";
+import { useEffect, useState } from "react";
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
+import axiosInstance from "../api/axiosInstance";
+import {
+  isAuthenticated,
+  clearTokens,
+} from "../utils/auth";
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const authenticated = isAuthenticated();
+
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchCurrentUser = async () => {
+      if (!authenticated) {
+        setRole(null);
+        return;
+      }
+
+      try {
+        const response = await axiosInstance.get("/api/users/me");
+
+        if (active) {
+          setRole(response.data.role);
+        }
+      } catch {
+        if (active) {
+          setRole(null);
+        }
+      }
+    };
+
+    fetchCurrentUser();
+
+    return () => {
+      active = false;
+    };
+  }, [authenticated, location.pathname]);
+
+  const isAdmin = role === "ADMIN";
 
   const linkClass = ({ isActive }) =>
     `transition-colors ${
@@ -14,20 +60,27 @@ function Navbar() {
 
   const handleLogout = () => {
     clearTokens();
+    setRole(null);
     navigate("/login", { replace: true });
   };
+
+  const logoDestination = isAdmin
+    ? "/admin/dashboard"
+    : "/dashboard";
 
   return (
     <header className="border-b border-slate-200 bg-white">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        {/* Logo */}
         <Link
-          to={authenticated ? "/dashboard" : "/"}
+          to={authenticated ? logoDestination : "/"}
           className="text-2xl font-bold text-indigo-600"
         >
           SlotLock
         </Link>
 
         <div className="flex items-center gap-6">
+          {/* Logged out */}
           {!authenticated && (
             <>
               <NavLink to="/" className={linkClass}>
@@ -47,9 +100,24 @@ function Navbar() {
             </>
           )}
 
+          {/* Logged in */}
           {authenticated && (
             <>
-              <NavLink to="/dashboard" className={linkClass}>
+              {/* Admin navigation */}
+              {isAdmin && (
+                <NavLink
+                  to="/admin/dashboard"
+                  className={linkClass}
+                >
+                  Admin Dashboard
+                </NavLink>
+              )}
+
+              {/* Normal dashboard */}
+              <NavLink
+                to="/dashboard"
+                className={linkClass}
+              >
                 Dashboard
               </NavLink>
 

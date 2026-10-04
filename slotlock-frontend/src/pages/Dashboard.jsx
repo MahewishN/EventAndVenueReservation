@@ -1,15 +1,7 @@
-import { useNavigate } from "react-router-dom";
-import { clearTokens } from "../utils/auth";
 import { Link } from "react-router-dom";
 
-function Dashboard() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    clearTokens();
-    navigate("/login", { replace: true });
-  };
-
+function Dashboard() 
+{
   return (
     <main className="min-h-[calc(100vh-72px)] bg-slate-50 px-4 py-12">
       <div className="mx-auto max-w-6xl">
@@ -27,13 +19,7 @@ function Dashboard() {
               Welcome back! Manage your venue bookings from here.
             </p>
           </div>
-
-          <button
-            onClick={handleLogout}
-            className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100"
-          >
-            Sign out
-          </button>
+        
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -34,9 +34,12 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Only handle 401 responses
+    if (!error.response) {
+      return Promise.reject(error);
+    }
+
     if (
-      error.response?.status !== 401 ||
+      error.response.status !== 401 ||
       originalRequest?._retry
     ) {
       return Promise.reject(error);
@@ -44,13 +47,14 @@ axiosInstance.interceptors.response.use(
 
     const refreshToken = getRefreshToken();
 
-    // No refresh token means the user must log in again
     if (!refreshToken) {
       clearTokens();
       window.location.href = "/login";
+
       return Promise.reject(error);
     }
 
+    // Prevent infinite refresh loops
     originalRequest._retry = true;
 
     try {
@@ -66,13 +70,17 @@ axiosInstance.interceptors.response.use(
         refreshToken: newRefreshToken,
       } = response.data;
 
+     
       saveTokens(accessToken, newRefreshToken);
 
-      // Retry the original request with the new access token
+    
       originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
       return axiosInstance(originalRequest);
+
     } catch (refreshError) {
+
+     
       clearTokens();
       window.location.href = "/login";
 

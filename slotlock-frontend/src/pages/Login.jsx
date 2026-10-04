@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
-import { saveTokens } from "../utils/auth";
+import { saveTokens, clearTokens } from "../utils/auth";
+
 
 function Login() {
   const navigate = useNavigate();
@@ -49,8 +49,17 @@ function Login() {
 
       saveTokens(accessToken, refreshToken);
 
-      navigate("/dashboard", { replace: true });
+      const userResponse = await axiosInstance.get("/api/users/me");
+      const user = userResponse.data;
+
+      if (user.role === "ADMIN") {
+       navigate("/admin/dashboard", { replace: true });
+      } else {
+         navigate("/dashboard", { replace: true });
+      }
+
     } catch (err) {
+      clearTokens();
       const data = err.response?.data;
 
       setError(
