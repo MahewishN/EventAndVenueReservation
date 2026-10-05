@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import axiosInstance from "../api/axiosInstance";
 
 const formatTime = (time) => time?.slice(0, 5) ?? "--";
@@ -55,6 +68,57 @@ function AdminDashboard() {
     fetchAnalytics();
   }, []);
 
+  /*
+   * Data for booking status donut chart.
+   */
+  const bookingStatusData = overview
+    ? [
+        {
+          name: "Confirmed",
+          value: overview.confirmedBookings ?? 0,
+        },
+        {
+          name: "Cancelled",
+          value: overview.cancelledBookings ?? 0,
+        },
+        {
+          name: "Expired",
+          value: overview.expiredBookings ?? 0,
+        },
+        {
+          name: "Pending",
+          value: overview.pendingBookings ?? 0,
+        },
+      ]
+    : [];
+
+  /*
+   * Data for resource utilization chart.
+   */
+  const resourceUtilizationData = resources.map((resource) => ({
+    name: resource.resourceName,
+    utilization: Number(resource.utilizationPercentage) || 0,
+  }));
+
+  /*
+   * Data for peak booking time chart.
+   */
+  const peakTimeData = peakTimes.map((item) => ({
+    time: formatTime(item.startTime),
+    bookings: item.confirmedBookings,
+  }));
+
+  /*
+   * Colors are intentionally kept in one place so the charts
+   * remain easy to modify later.
+   */
+  const bookingStatusColors = [
+    "#16a34a",
+    "#dc2626",
+    "#64748b",
+    "#f59e0b",
+  ];
+
   if (loading) {
     return (
       <main className="px-4 py-16">
@@ -89,6 +153,7 @@ function AdminDashboard() {
   return (
     <main className="min-h-[calc(100vh-72px)] bg-slate-50 px-4 py-10">
       <div className="mx-auto max-w-7xl">
+        {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
@@ -112,13 +177,13 @@ function AdminDashboard() {
           </button>
         </div>
 
-        {/* Booking statistics */}
+        {/* Booking Overview */}
         <section className="mt-8">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">
             Booking Overview
           </h2>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <StatCard
               label="Total Bookings"
               value={overview?.totalBookings}
@@ -151,7 +216,73 @@ function AdminDashboard() {
           </div>
         </section>
 
-        {/* Resource and slot statistics */}
+        {/* Quick Actions */}
+        <section className="mt-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Quick Actions
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Manage the main areas of your SlotLock system.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Link
+              to="/admin/bookings"
+              className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm"
+            >
+              <h3 className="font-semibold text-slate-900">
+                Manage Bookings
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-600">
+                View and manage customer bookings and their status.
+              </p>
+
+              <span className="mt-4 inline-block font-semibold text-indigo-600">
+                Manage bookings →
+              </span>
+            </Link>
+
+            <Link
+              to="/admin/resources"
+              className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm"
+            >
+              <h3 className="font-semibold text-slate-900">
+                Manage Resources
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-600">
+                Create, edit, and activate or deactivate venues.
+              </p>
+
+              <span className="mt-4 inline-block font-semibold text-indigo-600">
+                Manage resources →
+              </span>
+            </Link>
+
+            <Link
+              to="/admin/slots"
+              className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm"
+            >
+              <h3 className="font-semibold text-slate-900">
+                Manage Slots
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-600">
+                Generate slots and block or unblock availability.
+              </p>
+
+              <span className="mt-4 inline-block font-semibold text-indigo-600">
+                Manage slots →
+              </span>
+            </Link>
+          </div>
+        </section>
+
+        {/* Venue & Slot Overview */}
         <section className="mt-10">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">
             Venue & Slot Overview
@@ -178,7 +309,129 @@ function AdminDashboard() {
           </div>
         </section>
 
-        {/* Resource performance */}
+        {/* Charts */}
+        <section className="mt-10">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Analytics
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Visual overview of booking activity and resource utilization.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Booking Status Chart */}
+            <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="font-semibold text-slate-900">
+                Booking Status
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Distribution of bookings by their current status.
+              </p>
+
+              <div className="mt-4 h-[320px]">
+                {overview?.totalBookings > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={bookingStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={75}
+                        outerRadius={110}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {bookingStatusData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${entry.name}`}
+                            fill={bookingStatusColors[index]}
+                          />
+                        ))}
+                      </Pie>
+
+                      <Tooltip />
+
+                      <Legend
+                        verticalAlign="bottom"
+                        height={36}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                    No booking data available.
+                  </div>
+                )}
+              </div>
+            </article>
+
+            {/* Resource Utilization Chart */}
+            <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="font-semibold text-slate-900">
+                Resource Utilization
+              </h3>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Confirmed bookings compared with available slots.
+              </p>
+
+              <div className="mt-4 h-[320px]">
+                {resourceUtilizationData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={resourceUtilizationData}
+                      margin={{
+                        top: 10,
+                        right: 10,
+                        left: 0,
+                        bottom: 40,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+
+                      <XAxis
+                        dataKey="name"
+                        angle={-20}
+                        textAnchor="end"
+                        interval={0}
+                        height={70}
+                      />
+
+                      <YAxis
+                        domain={[0, 100]}
+                        tickFormatter={(value) => `${value}%`}
+                      />
+
+                      <Tooltip
+                        formatter={(value) => [
+                          `${Number(value).toFixed(2)}%`,
+                          "Utilization",
+                        ]}
+                      />
+
+                      <Bar
+                        dataKey="utilization"
+                        name="Utilization"
+                        fill="#4f46e5"
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                    No resource data available.
+                  </div>
+                )}
+              </div>
+            </article>
+          </div>
+        </section>
+
+        {/* Resource Booking Statistics */}
         <section className="mt-10">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-slate-900">
@@ -242,98 +495,62 @@ function AdminDashboard() {
           </div>
         </section>
 
-        {/* Peak booking times */}
+        {/* Peak Booking Times */}
         <section className="mt-10">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Peak Booking Times
-          </h2>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Peak Booking Times
+            </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Time slots ranked by confirmed booking count, as returned by the
-            backend.
-          </p>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {peakTimes.map((item, index) => (
-              <article
-                key={`${item.startTime}-${index}`}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-sm text-slate-500">Start time</p>
-
-                <p className="mt-2 text-2xl font-bold text-slate-900">
-                  {formatTime(item.startTime)}
-                </p>
-
-                <p className="mt-2 text-sm text-slate-600">
-                  {item.confirmedBookings} confirmed{" "}
-                  {item.confirmedBookings === 1 ? "booking" : "bookings"}
-                </p>
-              </article>
-            ))}
-
-            {peakTimes.length === 0 && (
-              <p className="text-sm text-slate-500">
-                No peak-time data available yet.
-              </p>
-            )}
+            <p className="mt-1 text-sm text-slate-500">
+              Confirmed bookings grouped by slot start time.
+            </p>
           </div>
-        </section>
 
-        {/* Admin shortcuts */}
-        <section className="mt-10">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">
-            Management
-          </h2>
+          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="h-[320px]">
+              {peakTimeData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={peakTimeData}
+                    margin={{
+                      top: 10,
+                      right: 20,
+                      left: 0,
+                      bottom: 10,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link
-              to="/admin/resources"
-              className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm"
-            >
-              <h3 className="font-semibold text-slate-900">
-                Manage Resources
-              </h3>
+                    <XAxis dataKey="time" />
 
-              <p className="mt-2 text-sm text-slate-600">
-                Create, edit, and activate or deactivate venues.
-              </p>
+                    <YAxis
+                      allowDecimals={false}
+                      tickFormatter={(value) => `${value}`}
+                    />
 
-              <span className="mt-4 inline-block font-semibold text-indigo-600">
-                Manage resources →
-              </span>
-            </Link>
+                    <Tooltip
+                      formatter={(value) => [
+                        value,
+                        "Confirmed bookings",
+                      ]}
+                    />
 
-            <Link
-              to="/admin/slots"
-              className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm"
-            >
-              <h3 className="font-semibold text-slate-900">
-                Manage Slots
-              </h3>
-
-              <p className="mt-2 text-sm text-slate-600">
-                Generate slots and block or unblock availability.
-              </p>
-
-              <span className="mt-4 inline-block font-semibold text-indigo-600">
-                Manage slots →
-              </span>
-            </Link>
-
-            <Link to="/admin/bookings" 
-              className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-indigo-300 hover:shadow-sm" > 
-              <h3 className="font-semibold text-slate-900"> Manage Bookings </h3> 
-              <p className="mt-2 text-sm text-slate-600"> 
-                View and manage customer bookings and their status. 
-              </p> 
-              <span className="mt-4 inline-block font-semibold text-indigo-600"> 
-                Manage bookings → 
-              </span> 
-                
-              </Link>
-
-          </div>
+                    <Bar
+                      dataKey="bookings"
+                      name="Confirmed bookings"
+                      fill="#6366f1"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                  No peak-time data available yet.
+                </div>
+              )}
+            </div>
+          </article>
         </section>
       </div>
     </main>

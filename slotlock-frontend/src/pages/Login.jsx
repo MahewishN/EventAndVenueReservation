@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import { saveTokens, clearTokens } from "../utils/auth";
 
-
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,6 +13,8 @@ function Login() {
     email: location.state?.email || "",
     password: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,11 +54,10 @@ function Login() {
       const user = userResponse.data;
 
       if (user.role === "ADMIN") {
-       navigate("/admin/dashboard", { replace: true });
+        navigate("/admin/dashboard", { replace: true });
       } else {
-         navigate("/dashboard", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
-
     } catch (err) {
       clearTokens();
       const data = err.response?.data;
@@ -154,17 +154,64 @@ function Login() {
               </Link>
             </div>
 
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            />
+            {/* Password input with visibility toggle */}
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full rounded-lg border border-slate-300 px-4 py-3 pr-12 text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((previous) => !previous)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-700"
+                aria-label={
+                  showPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showPassword ? (
+                  /* Eye off */
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.8}
+                    stroke="currentColor"
+                    className="h-5 w-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.98 8.223A10.477 10.477 0 0 0 2.25 12c1.5 4.5 5.7 7.5 9.75 7.5 1.57 0 3.07-.37 4.39-1.04M6.23 6.23A10.5 10.5 0 0 1 12 4.5c4.05 0 8.25 3 9.75 7.5a10.53 10.53 0 0 1-2.22 3.72M6.23 6.23 3 3m3.23 3.23 4.03 4.03m0 0a3 3 0 1 0 4.24 4.24m-4.24-4.24L17.77 17.77M21 21l-3.23-3.23"
+                    />
+                  </svg>
+                ) : (
+                  /* Eye */
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.8}
+                    stroke="currentColor"
+                    className="h-5 w-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6Z"
+                    />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Submit */}

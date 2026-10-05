@@ -21,16 +21,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                                  java.time.LocalDateTime time);
 
     @Query("""
-            SELECT b
-            FROM Booking b
-            JOIN FETCH b.slot s
-            JOIN FETCH s.resource r
-            JOIN FETCH b.user u
-            WHERE (:status IS NULL OR b.status = :status)
-              AND (:resourceId IS NULL OR r.id = :resourceId)
-              AND (:date IS NULL OR s.date = :date)
-            ORDER BY b.bookedAt DESC
-            """)
+        SELECT b
+        FROM Booking b
+        JOIN FETCH b.slot s
+        JOIN FETCH s.resource r
+        JOIN FETCH b.user u
+        WHERE b.status = COALESCE(:status, b.status)
+          AND r.id = COALESCE(:resourceId, r.id)
+          AND s.date = COALESCE(:date, s.date)
+        ORDER BY b.bookedAt DESC
+        """)
     List<Booking> findAdminBookings(
             @Param("status") BookingStatus status,
             @Param("resourceId") Long resourceId,

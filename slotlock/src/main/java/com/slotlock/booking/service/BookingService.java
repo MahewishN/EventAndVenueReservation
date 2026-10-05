@@ -116,9 +116,16 @@ public class BookingService {
         {
             throw new InvalidSlotOperationException("Only pending or confirmed bookings can be cancelled");
         }
-        booking.setStatus(BookingStatus.CANCELLED);
 
         Slot slot = booking.getSlot();
+        LocalDateTime slotStartDateTime = LocalDateTime.of(slot.getDate(), slot.getStartTime());
+
+        if(LocalDateTime.now().isAfter(slotStartDateTime))
+        {
+            throw new InvalidSlotOperationException("Past bookings cannot be cancelled");
+        }
+        booking.setStatus(BookingStatus.CANCELLED);
+
         slot.setStatus(SlotStatus.AVAILABLE);
 
         slotRepository.save(slot);
