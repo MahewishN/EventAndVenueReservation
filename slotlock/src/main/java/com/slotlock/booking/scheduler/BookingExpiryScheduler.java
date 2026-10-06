@@ -50,29 +50,6 @@ public class BookingExpiryScheduler {
         expireWaitlistOffers(now);
     }
 
-//    private void promoteNextWaitlistEntry(Slot slot)
-//    {
-//        List<WaitlistEntry> waitingEntries = waitlistRepository
-//                .findBySlotIdAndStatusOrderByJoinedAtAsc(slot.getId(),
-//                        WaitlistStatus.WAITING);
-//
-//        if(waitingEntries.isEmpty())
-//        {
-//            return ;
-//        }
-//
-//        WaitlistEntry entry = waitingEntries.get(0);
-//
-//        LocalDateTime offeredAt = LocalDateTime.now();
-//        LocalDateTime expiresAt = offeredAt.plusMinutes(WAITLIST_OFFER_WINDOW_MINUTES);
-//
-//        entry.setStatus(WaitlistStatus.OFFERED);
-//        entry.setOfferedAt(offeredAt);
-//        entry.setExpiresAt(expiresAt);
-//
-//        waitlistRepository.save(entry);
-//    }
-
     private void expireWaitlistOffers(LocalDateTime now)
     {
         List<WaitlistEntry> offeredEntries = waitlistRepository

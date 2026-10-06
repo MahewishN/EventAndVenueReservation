@@ -56,7 +56,6 @@ public class AuthService {
         pending.setUsername(request.getUsername().trim());
         pending.setEmail(email);
 
-        // Store the encoded password, never the plain-text password.
         pending.setPassword(passwordEncoder.encode(request.getPassword()));
 
         pending.setExpiresAt(LocalDateTime.now().plusMinutes(15));
@@ -150,8 +149,7 @@ public class AuthService {
                         "Unable to reset password. Please request a new OTP."));
 
         // This verifies the OTP for PASSWORD_RESET only.
-        emailOtpService.verifyOtp(
-                email, request.getOtp(), OtpPurpose.PASSWORD_RESET);
+        emailOtpService.verifyOtp(email, request.getOtp(), OtpPurpose.PASSWORD_RESET);
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);

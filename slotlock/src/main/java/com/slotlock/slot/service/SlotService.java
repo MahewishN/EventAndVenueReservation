@@ -78,8 +78,6 @@ public class SlotService {
              * startTime = 22:00
              * duration = 180
              * endTime = 01:00
-             *
-             * The previous check already handles this midnight case.
              */
             if (endTime.isAfter(closeTime)) {
                 break;
@@ -151,27 +149,6 @@ public class SlotService {
 
         return mapToResponse(updatedSlot);
     }
-
-//    @Transactional
-//    public void expirePastSlots()
-//    {
-//        List<Slot> pastSlots = slotRepository.findByDateBefore(LocalDate.now());
-//
-//        for (Slot slot : pastSlots)
-//        {
-//            if (slot.getStatus() != SlotStatus.EXPIRED) {
-//                slot.setStatus(SlotStatus.EXPIRED);
-//            }
-//        }
-//        if (!pastSlots.isEmpty()) {
-//            slotRepository.saveAll(pastSlots);
-//        }
-//    }
-//
-//    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Kolkata")
-//    public void expirePastSlotsAutomatically() {
-//        expirePastSlots();
-//    }
 
     @Transactional
     public void expirePastSlots()
