@@ -1,5 +1,6 @@
 package com.slotlock.auth.controller;
 
+import com.slotlock.auth.dto.ChangePasswordRequest;
 import com.slotlock.auth.dto.ForgotPasswordRequest;
 import com.slotlock.auth.dto.ResetPasswordRequest;
 import com.slotlock.auth.dto.VerifyRegistrationRequest;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -67,5 +69,13 @@ public class AuthController {
     {
         authService.resetPassword(request);
         return ResponseEntity.ok("Password reset successfully. You can now login with your new password");
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest request)
+    {
+        authService.changePassword(authentication.getName(), request);
+        return ResponseEntity.ok("Password changed successfully");
     }
 }

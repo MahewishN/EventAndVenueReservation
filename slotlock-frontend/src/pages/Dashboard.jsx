@@ -61,7 +61,12 @@ function Dashboard()
           </Link>
 
           {/* Account */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+
+            <Link
+             to="/profile"
+             className="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
+            >
+            
             <h2 className="font-semibold text-slate-900">
               Account
             </h2>
@@ -69,8 +74,12 @@ function Dashboard()
             <p className="mt-2 text-sm text-slate-600">
               Your account and profile information.
             </p>
-          </div>
-
+            
+            <p className="mt-4 text-sm font-medium text-indigo-600">
+              Manage account →
+            </p>
+            </Link>
+          
         </div>
       </div>
     </main>

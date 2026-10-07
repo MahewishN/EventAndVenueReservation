@@ -25,6 +25,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminResources from "./pages/AdminResources";
 import AdminSlots from "./pages/AdminSlots";
 import AdminBookings from "./pages/AdminBookings";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -83,6 +84,12 @@ function App() {
               path="/bookings/:bookingId/confirm"
               element={<BookingConfirmation />}
             />
+            
+            <Route
+            path="/profile"
+            element={<Profile />}
+            />
+
           </Route>
 
           <Route element={<AdminRoute />}>

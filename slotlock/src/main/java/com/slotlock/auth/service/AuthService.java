@@ -1,5 +1,6 @@
 package com.slotlock.auth.service;
 
+import com.slotlock.auth.dto.ChangePasswordRequest;
 import com.slotlock.auth.dto.ForgotPasswordRequest;
 import com.slotlock.auth.dto.ResetPasswordRequest;
 import com.slotlock.auth.entity.OtpPurpose;
@@ -192,5 +193,26 @@ public class AuthService {
         } catch (Exception ex) {
             throw new InvalidRefreshTokenException("Invalid or expired refresh token");
         }
+    }
+    public void changePassword(String email, ChangePasswordRequest request)
+    {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from the current password"
+            );
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        userRepository.save(user);
     }
 }

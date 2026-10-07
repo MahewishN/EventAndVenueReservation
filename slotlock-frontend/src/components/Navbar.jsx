@@ -112,13 +112,20 @@ function Navbar() {
                   Admin Dashboard
                 </NavLink>
               )}
-
+            
               {/* Normal dashboard */}
               <NavLink
                 to="/dashboard"
                 className={linkClass}
               >
                 Dashboard
+              </NavLink>
+
+              <NavLink
+                to="/profile"
+                className={linkClass}
+              >
+                Profile
               </NavLink>
 
               <button
