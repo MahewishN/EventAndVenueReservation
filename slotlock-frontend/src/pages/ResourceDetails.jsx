@@ -19,6 +19,22 @@ const getToday = () => {
 };
 
 const formatTime = (time) => time?.slice(0, 5) ?? "";
+const isSlotInPast = (slot) => {
+  const now = new Date();
+
+  const [year, month, day] = slot.date.split("-").map(Number);
+  const [hours, minutes] = slot.startTime.split(":").map(Number);
+
+  const slotStart = new Date(
+    year,
+    month - 1,
+    day,
+    hours,
+    minutes
+  );
+
+  return slotStart <= now;
+};
 
 const statusStyles = {
   AVAILABLE: "border-green-200 bg-green-50 text-green-700",
@@ -154,8 +170,10 @@ function ResourceDetails() {
   };
 
   const availableCount = slots.filter(
-    (slot) => slot.status === "AVAILABLE"
-  ).length;
+  (slot) =>
+    slot.status === "AVAILABLE" &&
+    !isSlotInPast(slot)
+).length;
 
   if (resourceLoading) {
     return (
@@ -360,7 +378,7 @@ function ResourceDetails() {
                     </div>
 
                     {/* Available slot booking section */}
-                    {slot.status === "AVAILABLE" && (
+                    {slot.status === "AVAILABLE" && !isSlotInPast(slot) && (
                       <>
                         <p className="mt-4 text-sm text-green-700">
                           This time slot is available.
@@ -394,9 +412,11 @@ function ResourceDetails() {
                       </>
                     )}
 
-                    {slot.status !== "AVAILABLE" && (
+                    {(slot.status !== "AVAILABLE" || isSlotInPast(slot)) && (
                       <p className="mt-4 text-sm text-slate-500">
-                        This time slot cannot currently be booked.
+                      {isSlotInPast(slot)
+                      ? "This time slot has already started and cannot be booked."
+                      : "This time slot cannot currently be booked."}
                       </p>
                     )}
                   </article>

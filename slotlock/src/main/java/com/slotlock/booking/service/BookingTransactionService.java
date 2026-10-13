@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,8 @@ public class BookingTransactionService {
         Slot slot = slotRepository.findById(request.getSlotId())
                 .orElseThrow(()-> new SlotNotFoundException
                         ("Slot not found with id: "+request.getSlotId()));
+
+        validateSlotNotInPast(slot);
 
         if(slot.getStatus() != SlotStatus.AVAILABLE)
         {
@@ -82,6 +85,8 @@ public class BookingTransactionService {
                 .orElseThrow(()-> new SlotNotFoundException
                         ("Slot not found with id: "+request.getSlotId()));
 
+        validateSlotNotInPast(slot);
+
         if(slot.getStatus() != SlotStatus.AVAILABLE)
         {
             throw new InvalidSlotOperationException("Slot is not available for booking");
@@ -127,5 +132,19 @@ public class BookingTransactionService {
                 booking.getStatus(),
                 booking.getBookedAt(),
                 booking.getExpiresAt());
+    }
+
+    private void validateSlotNotInPast(Slot slot) {
+        LocalDateTime slotStartDateTime =
+                LocalDateTime.of(slot.getDate(), slot.getStartTime());
+
+        LocalDateTime now =
+                LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+
+        if (!slotStartDateTime.isAfter(now)) {
+            throw new InvalidSlotOperationException(
+                    "This slot has already started and cannot be booked"
+            );
+        }
     }
 }
