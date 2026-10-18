@@ -51,7 +51,9 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public authentication endpoints
-                        .requestMatchers("/api/auth/register",
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/register",
                                 "/api/auth/verify-registration",
                                 "/api/auth/login",
                                 "/api/auth/refresh",
