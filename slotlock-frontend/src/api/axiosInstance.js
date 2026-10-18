@@ -40,7 +40,9 @@ axiosInstance.interceptors.response.use(
 
     if (
       error.response.status !== 401 ||
-      originalRequest?._retry
+      originalRequest?._retry ||
+      originalRequest?.url?.includes("/api/auth/login") ||
+      originalRequest?.url?.includes("/api/auth/refresh")
     ) {
       return Promise.reject(error);
     }
@@ -58,7 +60,7 @@ axiosInstance.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "/api/auth/refresh",
         {
           refreshToken,
