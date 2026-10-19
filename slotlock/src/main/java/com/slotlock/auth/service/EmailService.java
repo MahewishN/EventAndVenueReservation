@@ -19,10 +19,10 @@ public class EmailService {
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
-    @Value("${SENDGRID_API_KEY}")
+    @Value("${sendgrid.api.key}")
     private String apiKey;
 
-    @Value("${SENDGRID_FROM_EMAIL}")
+    @Value("${sendgrid.from.email}")
     private String senderEmail;
 
     public EmailService(ObjectMapper objectMapper) {
