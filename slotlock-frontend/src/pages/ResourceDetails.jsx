@@ -63,6 +63,10 @@ function ResourceDetails() {
   const [bookingError, setBookingError] = useState("");
   const [bookingSuccess, setBookingSuccess] = useState(null);
 
+  const [waitlistLoadingId, setWaitlistLoadingId] = useState(null);
+  const [waitlistError, setWaitlistError] = useState("");
+  const [waitlistSuccess, setWaitlistSuccess] = useState("");
+
   useEffect(() => {
     const fetchResource = async () => {
       setResourceLoading(true);
@@ -114,6 +118,51 @@ function ResourceDetails() {
 
     fetchSlots();
   }, [resourceId, date]);
+
+  const handleJoinWaitlist = async (slotId) => {
+  if (!isAuthenticated()) {
+    navigate("/login", {
+      state: { from: `/resources/${resourceId}` },
+    });
+    return;
+  }
+
+  if (waitlistLoadingId !== null || !resource?.active) {
+    return;
+  }
+
+  setWaitlistLoadingId(slotId);
+  setWaitlistError("");
+  setWaitlistSuccess("");
+
+  try {
+    const response = await axiosInstance.post("/api/waitlist", {
+      slotId,
+    });
+
+    setWaitlistSuccess(
+      `Successfully joined the waitlist for slot #${slotId}.`
+    );
+
+    // Refresh slots so the displayed availability stays current.
+    const slotsResponse = await axiosInstance.get(
+      `/api/resources/${resourceId}/slots`,
+      { params: { date } }
+    );
+
+    setSlots(slotsResponse.data);
+
+    // Keep the API response available if needed for debugging.
+    console.debug("Waitlist entry created:", response.data);
+  } catch (err) {
+    setWaitlistError(
+      err.response?.data?.message ||
+        "Unable to join the waitlist. Please try again."
+    );
+  } finally {
+    setWaitlistLoadingId(null);
+  }
+};
 
   const handleCreateBooking = async (slotId) => {
     if (!isAuthenticated()) {
@@ -411,14 +460,42 @@ function ResourceDetails() {
                         )}
                       </>
                     )}
+                    
+                  {(slot.status !== "AVAILABLE" || isSlotInPast(slot)) && (
+                    <>
+                    <p className="mt-4 text-sm text-slate-500">
+                    {isSlotInPast(slot)
+                    ? "This time slot has already started and cannot be booked."
+                    : slot.status === "BOOKED"
+                    ? "This slot is booked. You can join the waitlist."
+                    : "This time slot cannot currently be booked."}
+                    </p>
 
-                    {(slot.status !== "AVAILABLE" || isSlotInPast(slot)) && (
-                      <p className="mt-4 text-sm text-slate-500">
-                      {isSlotInPast(slot)
-                      ? "This time slot has already started and cannot be booked."
-                      : "This time slot cannot currently be booked."}
-                      </p>
-                    )}
+                    {slot.status === "BOOKED" && !isSlotInPast(slot) &&
+                     resource.active && ( isAuthenticated() ? (
+                     <button
+                      type="button"
+                      onClick={() => handleJoinWaitlist(slot.id)}
+                      disabled={waitlistLoadingId !== null}
+                      className="mt-4 w-full rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                      {waitlistLoadingId === slot.id
+                      ? "Joining waitlist..."
+                      : "Join Waitlist"}
+                      </button>
+                      ) : (
+                   <Link
+                    to="/login"
+                    state={{ from: `/resources/${resourceId}` }}
+                    className="mt-4 block rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-center font-semibold text-indigo-700 hover:bg-indigo-100"
+                   >
+                   Sign in to join waitlist
+                  </Link>
+                  )
+                  )}
+                  </>
+                )}
+                    
                   </article>
                 ))}
               </div>
@@ -434,6 +511,37 @@ function ResourceDetails() {
               {bookingError}
             </div>
           )}
+
+          {waitlistError && (
+          <div
+            role="alert"
+            className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+          {waitlistError}
+           </div>
+          )}
+
+          {waitlistSuccess && (
+          <div
+            role="status"
+            className="mt-6 rounded-xl border border-green-200 bg-green-50 p-5"
+          >
+          <p className="font-semibold text-green-900">
+           Joined waitlist successfully!
+          </p>
+
+          <p className="mt-1 text-sm text-green-800">
+            {waitlistSuccess}
+          </p>
+
+          <Link
+            to="/my-waitlist"
+            className="mt-3 inline-block font-semibold text-green-800 underline"
+          >
+            View my waitlist →
+          </Link>
+          </div>
+        )}
 
           {/* Booking success */}
           {bookingSuccess && (
@@ -465,7 +573,7 @@ function ResourceDetails() {
 
             <p className="mt-1 text-sm leading-6 text-indigo-800">
               {isAuthenticated()
-                ? "You are signed in. Booking functionality is the next step."
+                ? "Book an available slot or join the waitlist when a slot is already booked."
                 : "Sign in or create an account when you're ready to book a venue."}
             </p>
 

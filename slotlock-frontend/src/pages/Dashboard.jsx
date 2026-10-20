@@ -45,9 +45,9 @@ function Dashboard()
           {/* My Bookings */}
           <Link
             to="/my-bookings"
-            className="block rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            className="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
           >
-            <h2 className="font-medium text-slate-900">
+            <h2 className="font-semibold text-slate-900">
               My Bookings
             </h2>
 
@@ -55,8 +55,25 @@ function Dashboard()
               View and manage your reservations.
             </p>
 
-            <span className="mt-4 inline-block text-sm font-medium text-indigo-600">
+            <span className="mt-4 inline-block text-sm font-semibold text-indigo-600">
               View bookings →
+            </span>
+          </Link>
+
+          <Link
+            to="/my-waitlist"
+            className="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+          >
+            <h2 className="font-semibold text-slate-900">
+              My Waitlist
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-600">
+              Track your waitlist positions and confirm offers for booked slots.
+            </p>
+
+            <span className="mt-4 inline-block text-sm font-semibold text-indigo-600">
+              View waitlist →
             </span>
           </Link>
 

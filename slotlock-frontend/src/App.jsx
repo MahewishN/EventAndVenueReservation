@@ -26,6 +26,7 @@ import AdminResources from "./pages/AdminResources";
 import AdminSlots from "./pages/AdminSlots";
 import AdminBookings from "./pages/AdminBookings";
 import Profile from "./pages/Profile";
+import MyWaitlist from "./pages/MyWaitlist";
 
 function App() {
   return (
@@ -85,10 +86,9 @@ function App() {
               element={<BookingConfirmation />}
             />
             
-            <Route
-            path="/profile"
-            element={<Profile />}
-            />
+            <Route path="/profile" element={<Profile />} />
+
+            <Route path="/my-waitlist" element={<MyWaitlist />} />
 
           </Route>
 

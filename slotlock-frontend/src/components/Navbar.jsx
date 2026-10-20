@@ -112,7 +112,7 @@ function Navbar() {
                   Admin Dashboard
                 </NavLink>
               )}
-            
+
               {/* Normal dashboard */}
               <NavLink
                 to="/dashboard"
@@ -120,7 +120,7 @@ function Navbar() {
               >
                 Dashboard
               </NavLink>
-
+              
               <NavLink
                 to="/profile"
                 className={linkClass}
